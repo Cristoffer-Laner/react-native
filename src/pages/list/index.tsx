@@ -1,79 +1,103 @@
-import React,{ useState } from "react";
+import React,{ useState,useContext,useRef} from "react";
 import { style } from "./styles";
 import { Ball } from "../../components/Ball";
 import { Input } from "../../components/Input";
-import {MaterialIcons} from '@expo/vector-icons';
-import {Text, View,StatusBar,FlatList, TouchableOpacity} from 'react-native'
+import {MaterialIcons,AntDesign} from '@expo/vector-icons';
 import { Flag } from "../../components/Flag";
 import { themas } from "../../global/themes";
-import { Button } from "../../components/Button";
-
-type PropCard = {
-    item:number,
-    title:string,
-    description:string,
-    flag:'Urgente'|'Opcional'
-}
-
-const data:any = [
-    {
-        item:0,
-        title:'Realizar a lição de casa!',
-        description:'página 10 a 20',
-        flag:'Urgente'
-    },
-    {
-        item:1,
-        title:'Passear com cachorro!',
-        description:'página 10 a 20',
-        flag:'Opcional'
-    },
-    {
-        item:2,
-        title:'Sair para tomar açaí!',
-        description:'página 10 a 20',
-        flag:'Opcional'
-    }
-]
+import {AuthContextList}   from "../../context/authContext_list";
+import {Text, View,StatusBar,FlatList} from 'react-native'
+import { Swipeable } from 'react-native-gesture-handler';
+import { formatDateToBR } from "../../global/funtions";
 
 export default function List (){
-    const _renderCard = (data:PropCard,index:number) => {
+
+    const {taskList,handleDelete,handleEdit,filter} = useContext<AuthContextType>(AuthContextList);
+
+    const swipeableRefs = useRef([]);
+
+    const renderRightActions = () => (
+        <View style={style.Button}>
+          <AntDesign 
+            name="delete"
+            size={20}
+            color={'#FFF'}
+          />
+        </View>
+    );
+    const renderLeftActions = () => (
+        <View style={[style.Button,{backgroundColor:themas.Colors.blueLigth}]}>
+            <AntDesign 
+                name="edit"
+                size={20}
+                color={'#FFF'}
+            />
+        </View>
+    );
+
+    const handleSwipeOpen = (direction,item,index) => {
+        if (direction === 'right') {
+            handleDelete(item)
+            swipeableRefs.current[index]?.close();
+        } else if (direction === 'left') {
+            handleEdit(item)
+            swipeableRefs.current[index]?.close();
+        }
+    }
+
+    const _renderCard = (item:PropCard,index:number) =>{        
+        const color  = item.flag == 'opcional'?themas.Colors.blueLigth:themas.Colors.red
         return (
-            <TouchableOpacity key={data.item} style={style.card}>
-                <View style={style.rowCard}>
-                    <View style={style.rowCardLeft}>
-                        <Ball color="red"/>
-                        <View>
-                            <Text style={style.titleCard}>{data.title}</Text>
-                            <Text style={style.descriptionCard}>{data.description}</Text>
+            <Swipeable  
+                ref={(ref) => swipeableRefs.current[index] = ref} 
+                key={item.item} 
+                renderRightActions={renderRightActions} 
+                renderLeftActions={renderLeftActions}
+                onSwipeableOpen={(direction) => handleSwipeOpen(direction,item,index)}
+                
+            >
+                <View style={style.card}>
+                    <View style={style.rowCard}>
+                        <View style={style.rowCardLeft}>
+                            <Ball color={color} />
+                            <View>
+                                <Text style={style.titleCard}>{item.title}</Text>
+                                <Text style={style.descriptionCard}>{item.description}</Text>
+                                <Text style={style.descriptionCard}>até {formatDateToBR(item.timeLimit)}</Text>
+                            </View>
                         </View>
+                        <Flag 
+                            caption={item.flag} 
+                            color={color} 
+                        />
                     </View>
-                    <Flag caption={data.flag} color={data.flag === 'Opcional' ? themas.Colors.blueLigth : themas.Colors.red}/>
                 </View>
-            </TouchableOpacity>
+            </Swipeable >
         )
     }
     
     return(
         <View style={style.container}>
-            {/* <StatusBar  barStyle="light-content"/> */}
+            <StatusBar  barStyle="light-content"/>
             <View style={style.header}>
-                <Text style={style.greeting}>Bom dia, <Text style={{fontWeight:'bold'}}>Cristoffer L.</Text></Text>
+                <Text style={style.greeting}>Olá, <Text style={{fontWeight:'bold'}}>Cristoffer L.</Text></Text>
                 <View style={style.boxInput}>
                     <Input 
                         IconLeft={MaterialIcons}
                         iconLeftName="search"
+                        onChangeText={(t)=>filter(t)}
                     />
                 </View>
             </View>
             <View style={style.boxList}>
                 <FlatList 
-                    data={data}
+                    data={taskList}
                     style={{marginTop:40,paddingHorizontal:30}}
-                    keyExtractor={(item,index)=>item.number}
+                    keyExtractor={(item,index)=>item.item.toString()}
                     renderItem={({item,index})=>{return(_renderCard(item,index))}}
                 />
             </View>
         </View>
     )
 }
+

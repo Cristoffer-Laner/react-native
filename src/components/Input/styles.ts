@@ -7,10 +7,10 @@ export const style = StyleSheet.create({
         width:'100%',
         height:40,
         borderWidth:1,
-        borderRadius:40,
+        borderRadius:10,
         borderColor:themas.Colors.lightGray,
         backgroundColor:themas.Colors.bgScreen,
-        marginTop:10,
+        // marginTop:10,
         flexDirection:'row',
         alignItems:'center',
         justifyContent:'space-around',
@@ -20,8 +20,9 @@ export const style = StyleSheet.create({
         // backgroundColor:'red',
         height:'100%',
         width:'100%',
-        borderRadius:40,
-        // paddingHorizontal:20
+        borderRadius:10,
+        paddingHorizontal:15,
+        marginVertical:'auto'
     },
     titleInput:{
         marginLeft:5,

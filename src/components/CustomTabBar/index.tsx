@@ -26,7 +26,14 @@ export default({state,navigation})=>{
                     style={{opacity:state.index===0?1:0.5,color:themas.Colors.primary,fontSize:32}}
                 />
             </TouchableOpacity>
-            <TouchableOpacity  style={style.TabItemButton} onPress={()=>onOpen()}>
+            <TouchableOpacity  
+                style={style.TabItemButton} 
+                // onPress={()=>onOpen()}
+                onPress={(event) => {
+                    event.persist();
+                    onOpen();
+                }}
+            >
                 <View style={{width:'100%',left:10,top:4}}>
                     <Entypo 
                         name="plus"  

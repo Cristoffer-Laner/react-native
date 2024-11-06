@@ -46,16 +46,17 @@ export const Input = forwardRef((props: Props, ref: LegacyRef<TextInput> | null)
     return (
         <>
             {title && <Text style={[style.titleInput,labelStyle]}>{title}</Text>}
-            <View style={[style.boxInput, { paddingLeft: calculateSizePaddingLeft(),height:height?height:40}]}>
+            <View style={[style.boxInput, { paddingLeft: calculateSizePaddingLeft(),height:height?height:40,padding:5}]}>
                 {IconLeft && iconLeftName && (
                     <TouchableOpacity onPress={onIconLeftPress} style={style.Button}>
                         <IconLeft name={iconLeftName as any} size={20} color={themas.Colors.gray} style={style.Icon} />
                     </TouchableOpacity>
                 )}
                 <TextInput 
-                    {...rest}
                     style={[style.input, { width: calculateSizeWidth(),height:'100%'}]}
                     ref={ref}
+                    multiline
+                    {...rest}
                     
                 />
                 {IconRigth && iconRightName && (

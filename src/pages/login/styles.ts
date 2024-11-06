@@ -16,20 +16,17 @@ export const style = StyleSheet.create({
         justifyContent:'center'
     },
     boxMid:{
-        height:Dimensions.get('window').height/3,
+        height:Dimensions.get('window').height/4,
         // backgroundColor:'blue',
         width:'100%',
         paddingHorizontal:37,
     },
     boxBottom:{
-        height:Dimensions.get('window').height/4,
+        height:Dimensions.get('window').height/3,
         // backgroundColor:'green',
         width:'100%',
         alignItems:'center',
         justifyContent:'flex-start'
-        
-    },
-    loginButton:{
         
     },
     boxInput:{
@@ -45,8 +42,8 @@ export const style = StyleSheet.create({
         paddingHorizontal:30
     },
     logo:{
-        width:80,
-        height:80,
+        width:400,
+        height:50,
         marginTop:40
     },
     text:{

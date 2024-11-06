@@ -32,7 +32,7 @@ export const style = StyleSheet.create({
     },
     card:{
         width:'100%',
-        height:60,
+        minHeight:60,
         backgroundColor:'#FFF',
         marginTop:6,
         borderRadius:10,
@@ -58,5 +58,18 @@ export const style = StyleSheet.create({
         flexDirection:'row',
         gap:10,
         alignItems:'center'
-    }
+    },
+    Button: {
+        backgroundColor: 'red',
+        justifyContent: 'center',
+        alignItems: 'center',
+        width: 100,
+        marginVertical: 10,
+        borderRadius: 10,
+    },
+    ButtonText: {
+        color: 'white',
+        fontWeight: 'bold',
+    },
+    
 })
