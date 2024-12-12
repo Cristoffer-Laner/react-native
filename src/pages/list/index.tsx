@@ -8,11 +8,10 @@ import { themas } from "../../global/themes";
 import {AuthContextList}   from "../../context/authContext_list";
 import {Text, View,StatusBar,FlatList} from 'react-native'
 import { Swipeable } from 'react-native-gesture-handler';
-import { formatDateToBR } from "../../global/funtions";
 
 export default function List (){
 
-    const {taskList,handleDelete,handleEdit,filter} = useContext<AuthContextType>(AuthContextList);
+    const {taskList,handleDelete,handleEdit,filter} = useContext<AuthContextType>(AuthContextList);    
 
     const swipeableRefs = useRef([]);
 
@@ -63,7 +62,7 @@ export default function List (){
                             <View>
                                 <Text style={style.titleCard}>{item.title}</Text>
                                 <Text style={style.descriptionCard}>{item.description}</Text>
-                                <Text style={style.descriptionCard}>até {formatDateToBR(item.timeLimit)}</Text>
+                                {/* <Text style={style.descriptionCard}>até {formatDateToBR(item.timeLimit)}</Text> */}
                             </View>
                         </View>
                         <Flag 

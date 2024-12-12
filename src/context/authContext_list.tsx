@@ -4,9 +4,7 @@ import { Flag } from "../components/Flag";
 import { Input } from "../components/Input";
 import { Modalize } from 'react-native-modalize';
 import { MaterialIcons, AntDesign } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import CustomDateTimePicker from "../components/CustomDateTimePicker";
-import { TouchableOpacity, Text, View, StyleSheet, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { TouchableOpacity, Text, View, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Alert } from 'react-native';
 import { Loading } from "../components/Loading";
 
 
@@ -17,6 +15,16 @@ const flags = [
     { caption: 'opcional', color: themas.Colors.blueLigth }
 ];
 
+interface TaskResponse {
+    id: number;
+    item: number;
+    description: string;
+    flag: string;
+    timeLimit: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
 export const AuthProviderList = (props) => {
     const modalizeRef = useRef(null);
     const [title, setTitle] = useState('');
@@ -24,12 +32,10 @@ export const AuthProviderList = (props) => {
     const [selectedFlag, setSelectedFlag] = useState('urgente');
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [selectedTime, setSelectedTime] = useState(new Date());
-    const [showDatePicker, setShowDatePicker] = useState(false);
-    const [showTimePicker, setShowTimePicker] = useState(false);
-    const [taskList, setTaskList] = useState([]);
-    const [taskListBackup,setTaskListBackup]= useState([]);
+    const [taskList, setTaskList] = useState<any>([]);
+    const [taskListBackup,setTaskListBackup]= useState<any>([]);
     const [item,setItem] = useState(0);
-    const [loading,setLoading]= useState(false)
+    const [loading,setLoading]= useState(false)    
 
     const onOpen = () => {
         modalizeRef.current?.open();
@@ -50,43 +56,43 @@ export const AuthProviderList = (props) => {
     const handleTimeChange = (date) => {
         setSelectedTime(date)
     };
-    const handleSave = async () => {
-        const newItem = {
-            item: item !== 0 ? item : Date.now(),
-            title,
-            description,
-            flag: selectedFlag,
-            timeLimit: new Date(
-                selectedDate.getFullYear(),
-                selectedDate.getMonth(),
-                selectedDate.getDate(),
-                selectedTime.getHours(),
-                selectedTime.getMinutes()
-            ).toISOString()
-        };
+
+    const handleSave = async () => {        
+        const flag = selectedFlag
+        const timeLimit = new Date(
+            selectedDate.getFullYear(),
+            selectedDate.getMonth(),
+            selectedDate.getDate(),
+            selectedTime.getHours(),
+            selectedTime.getMinutes()
+        ).toISOString()
         onClose();
-    
+
         try {
             setLoading(true)
-            const storedData = await AsyncStorage.getItem('taskList');
-            let taskList = storedData ? JSON.parse(storedData) : [];
-    
-            // Verifica se o item já existe no array
-            const itemIndex = taskList.findIndex((task) => task.item === newItem.item);
-    
-            if (itemIndex >= 0) {
-                // Substitui o item existente pelo novo
-                taskList[itemIndex] = newItem;
-            } else {
-                // Adiciona o novo item ao array
-                taskList.push(newItem);
-            }
-    
-            await AsyncStorage.setItem('taskList', JSON.stringify(taskList));
-            setTaskList(taskList);
-            setTaskListBackup(taskList)
-            setData()
+            const createTask = await fetch('http://localhost:3030/tasks/create',
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-type": "application/json",
+                    },
+                    body: JSON.stringify({ item: Math.floor(Math.random() * 100000), title, description, flag, timeLimit })
+                }
+            );
+
+            const getTasks: () => Promise<any> = async () => {
+                const url = 'http://localhost:3030/tasks';
+                const response: Response = await fetch(url);
+                const data = await response.json();
+              
+                return data;
+            };
+
+            const tasks = await getTasks()
             
+            setTaskList(tasks);
+            setTaskListBackup(tasks);
+            setData();
         } catch (error) {
             console.error("Erro ao salvar o item:", error);
             onOpen()
@@ -94,51 +100,79 @@ export const AuthProviderList = (props) => {
             setLoading(false)
         }
     };
+
+    const filter = async (t:string) => {
+        const pesquisa = t.toUpperCase()
     
-    const filter = (t:string) => {
-        if(taskList.length == 0)return
-        const array = taskListBackup
-        const campos = ['title','description']
-        if (t) {
-            const searchTerm = t.trim().toLowerCase(); 
-            
-            const filteredArr = array.filter((item) =>{ 
-                for(let i =0; i<campos.length; i++){
-                    if(item[campos[i].trim()].trim().toLowerCase().includes(searchTerm))
-                        return true
-                }
-            });
-    
-            setTaskList(filteredArr);
-        } else {
-            setTaskList(array);
+        const response = await fetch("http://localhost:3030/tasks", {
+            method: 'GET',
+            headers: {
+                "Content-type": "application/json",
+            }
+        })
+
+        const dados = await response.json()
+
+        const novosDados = dados.filter(task =>
+            task.title.toUpperCase().includes(pesquisa) ||
+            task.description.toUpperCase().includes(pesquisa)
+        );
+
+        if (novosDados.length == 0) {
+            Alert.alert('Não há tarefas com essa pesquisa', 'My Alert Msg', [
+                {
+                  text: 'Cancel',
+                  onPress: () => console.log('Cancel Pressed'),
+                  style: 'cancel',
+                },
+                {text: 'OK', onPress: () => console.log('OK Pressed')},
+              ]);
         }
+
+        setTaskList(novosDados)
     }
 
-    
-
     const handleEdit = async (itemToEdit:PropCard) => {
+        const title = itemToEdit.title
+        const description = itemToEdit.description
+        const flag = itemToEdit.flag
+        const timeLimit = new Date(itemToEdit.timeLimit);
         setTitle(itemToEdit.title);
         setDescription(itemToEdit.description);
         setSelectedFlag(itemToEdit.flag);
         setItem(itemToEdit.item)
-        
-        const timeLimit = new Date(itemToEdit.timeLimit);
         setSelectedDate(timeLimit);
         setSelectedTime(timeLimit);
+
+        const updateTask = await fetch('http://localhost:3030/tasks/update/' + itemToEdit.item,
+            {
+                method: "PUT",
+                headers: {
+                    "Content-type": "application/json",
+                },
+                body: JSON.stringify({ title, description, flag, timeLimit })
+            }
+        );
         
+        get_taskList()
         onOpen(); 
     };
     
     const handleDelete = async (itemToDelete) => {
         try {
             setLoading(true)
-            const storedData = await AsyncStorage.getItem('taskList');
-            const taskList = storedData ? JSON.parse(storedData) : [];
+            // const storedData = await AsyncStorage.getItem('taskList');
+            // const taskList = storedData ? JSON.parse(storedData) : [];
             
             const updatedTaskList = taskList.filter(item => item.item !== itemToDelete.item);
-    
-            await AsyncStorage.setItem('taskList', JSON.stringify(updatedTaskList));
+
+            const response = await fetch('http://localhost:3030/tasks/delete/' + itemToDelete.item, {
+                method: "DELETE",
+                headers: {
+                    "Content-type": "application/json",
+                }
+            });
+
             setTaskList(updatedTaskList);
             setTaskListBackup(updatedTaskList)
         } catch (error) {
@@ -148,18 +182,25 @@ export const AuthProviderList = (props) => {
         }
     };
     
-
     async function get_taskList() {
         try {
-            setLoading(true)
-            const storedData = await AsyncStorage.getItem('taskList');
-            const taskList = storedData ? JSON.parse(storedData) : [];
-            setTaskList(taskList);
-            setTaskListBackup(taskList)
+            const response = await fetch('http://localhost:3030/tasks', {
+                method: "GET",
+                headers: {
+                    "Content-type": "application/json",
+                }
+            });
+            
+            // Aguarde a resolução de response.json()
+            const json = await response.json();
+            console.log("Dados recebidos de get_taskList:", json);
+            
+            setTaskList(json); // Atualize com os dados resolvidos
+            setTaskListBackup(json); // Atualize com os dados resolvidos
         } catch (error) {
-            console.log(error);
-        }finally{
-            setLoading(false)
+            console.log("Erro ao buscar a lista de tarefas:", error);
+        } finally {
+            setLoading(false);
         }
     }
 
@@ -240,20 +281,6 @@ export const AuthProviderList = (props) => {
                                 />
                             </TouchableOpacity>
                         </View>
-
-                            <CustomDateTimePicker 
-                                type='date' 
-                                onDateChange={handleDateChange} 
-                                show={showDatePicker} 
-                                setShow={setShowDatePicker} 
-                            />
-                            <CustomDateTimePicker 
-                                type='time' // Mude para 'time' aqui
-                                onDateChange={handleTimeChange} 
-                                show={showTimePicker} // Use showTimePicker aqui
-                                setShow={setShowTimePicker} // Use setShowTimePicker aqui
-                            />
-
                         <View style={styles.containerFlag}>
                             <Text style={styles.flag}>Flags:</Text>
                             <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
